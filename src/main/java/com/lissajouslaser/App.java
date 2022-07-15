@@ -1,7 +1,5 @@
 package com.lissajouslaser;
 
-// import java.util.Calendar;
-
 /**
  * Hello world!
  */
@@ -14,6 +12,7 @@ public final class App {
      * @param args The arguments of the program.
      */
     public static void main(String[] args) {
-
+        TextUI textUI = new TextUI();
+        textUI.start();
     }
 }

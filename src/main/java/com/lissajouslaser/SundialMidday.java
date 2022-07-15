@@ -28,7 +28,8 @@ public class SundialMidday {
         final int minuteToSeconds = 60;
         double eotWithLongitudeOffsetInSecs = (equationOfTime() + offset()) * minuteToSeconds;
 
-        // set calendar to midday mean solar time
+        // Set calendar to midday mean solar time,
+        // note that Caldendar is zero index.
         final int midday = 12;
         cal.set(Calendar.HOUR_OF_DAY, midday);
         cal.set(Calendar.MINUTE, 0);
@@ -47,10 +48,10 @@ public class SundialMidday {
         return formattedTime;
     }
 
-    /*
+    /**
      * Returns the equation of time in minutes.
      */
-    private double equationOfTime() {
+    public double equationOfTime() {
         // Constants for the equation of time function.
         final double constA = 9.87;
         final int constB = 2;
