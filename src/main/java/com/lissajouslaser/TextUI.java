@@ -116,14 +116,16 @@ public class TextUI {
     private void loadFile() {
         try (Scanner fileScan = new Scanner(Paths.get("cityLongitudes.csv"))) {
 
+            // File uses comma separated values.
+            // For longitude we also need to separate the value
+            // from the direction via ° symbol
+            fileScan.useDelimiter(",|°|\\n");
             while (fileScan.hasNext()) {
-                String[] line = fileScan.nextLine().split(",");
 
-                String city = line[0];
+                String city = fileScan.next();
 
-                String[] longitudeTokens = line[1].split("°");
-                Longitude longitude = new Longitude(Double
-                        .valueOf(longitudeTokens[0]), longitudeTokens[1]);
+                Longitude longitude = new 
+                        Longitude(fileScan.nextDouble(), fileScan.next());
 
                 cities.add(city);
                 citiesAndLongitudes.put(city, longitude);
