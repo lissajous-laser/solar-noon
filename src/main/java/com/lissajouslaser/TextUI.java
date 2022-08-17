@@ -2,7 +2,9 @@ package com.lissajouslaser;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.zone.ZoneRules;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,8 +14,7 @@ import java.util.Scanner;
  * Class for user interface.
  */
 public class TextUI {
-    private Map<String, Longitude> citiesAndLongitudes;
-    private ArrayList<String> cities;
+    private Map<String, Double> citiesAndLongitudes;
     private Scanner scanner;
 
     /**
@@ -21,7 +22,6 @@ public class TextUI {
      */
     public TextUI() {
         citiesAndLongitudes = new HashMap<>();
-        cities = new ArrayList<>();
         scanner = new Scanner(System.in);
     }
 
@@ -30,43 +30,60 @@ public class TextUI {
      */
     public TextUI(Scanner scanner) {
         citiesAndLongitudes = new HashMap<>();
-        cities = new ArrayList<String>();
         this.scanner = scanner;
     }
 
     /**
      * Main public method for creating the user interface.
      */
-    public String start() {
+    public LocalTime start() {
 
         Calendar cal = Calendar.getInstance();
-        Longitude longitude;
+        Object longitudeOrNull; // Wrapper for value obtained from citiesAndLongitudes
+        double longitude;
         String input;
+        ZoneRules zoneRules = null;
 
-        loadFile();
+        loadCityDataFile();
 
         System.out.println("\nThis program will give you the time of midday at "
                 + "true solar time");
-        System.out.println("Here are the cities you can check the time for:");
-        for (String city : cities) {
-            System.out.println("- " + city);
-        }
         while (true) {
 
             System.out.println("\nEnter in a city:");
-            input = scanner.nextLine().trim();
+            input = scanner.nextLine().trim().toLowerCase();
 
-            longitude = citiesAndLongitudes.get(input);
-            if (longitude != null) {
-                break;
+            longitudeOrNull = citiesAndLongitudes.get(input);
+            // Make sure key value pair exists in citiesAndLongitudes.
+            if (longitudeOrNull == null) {
+                System.out.println("Sorry there is no matching city. Try again.");
+                continue;
             }
-            System.out.println("Sorry there is no matching city. Try again.");
+            longitude = (double) longitudeOrNull;
+
+            // Find matches in zone IDs from java.time.ZoneID
+            for (String zoneID : ZoneId.getAvailableZoneIds()) {
+
+                // If zone has a region qualified name, remove
+                // region qualifier.
+                String[] qualifiedZoneName = zoneID.split("/");
+                String zoneName = qualifiedZoneName[qualifiedZoneName.length - 1]
+                        .replace('_', ' ')
+                        .toLowerCase();
+
+                if (zoneName.equals(input.toLowerCase())) {
+                    zoneRules = ZoneId.of(zoneID).getRules();
+                }
+            }
+            if (zoneRules == null) {
+                System.out.println("Sorry there is no matching city. Try again.");
+                continue;
+            }
+            break;
         }
 
-        System.out.println("\nEnter a date (in MMDD format) "
+        System.out.println("\nEnter a date (in DDMM format) "
                 + "you would like to check. Leave blank for today.");
-        System.out.println("Calculation is most accurate between"
-                + " the years 1900 to 2100");
 
         while (true) {
             input = scanner.nextLine().trim();
@@ -75,27 +92,25 @@ public class TextUI {
                 break;
             }
             if (input.matches("\\d{4}")) {
-                // Will allow lenient mode on inputs.
-                // User input with be one index
-                final int dayIndex = 2;
+                final int monthIndex = 2;
                 final int zeroIdxOffset = -1;
 
-                cal = Calendar.getInstance();
-
-                cal.set(0,
-                        removePaddedZeros(input.substring(0, dayIndex))
+                cal.set(cal.get(Calendar.YEAR),                           // current year
+                        removePaddedZeros(input.substring(monthIndex))    // set month
                                 + zeroIdxOffset,
-                        removePaddedZeros(input.substring(dayIndex))
+                        removePaddedZeros(input.substring(0, monthIndex)) // set day
                                 + zeroIdxOffset);
                 break;
             }
             System.out.println("Sorry this is not a valid date. Try again.");
         }
-        SundialMidday sundialMidday = new SundialMidday(longitude, cal);
-        String middayTrueSolarTime = sundialMidday.trueSolarTime();
+
+        NoonCalculator sundialMidday = new NoonCalculator(longitude, cal, zoneRules);
+        LocalTime middayTrueSolarTime = sundialMidday.trueSolarNoon();
 
         System.out.println("\nMidday in true solar time will occur at "
-                + "(daylight savings not applied): " + middayTrueSolarTime);
+                + "(in local time, with daylight savings if applicable):\n"
+                + middayTrueSolarTime);
 
         scanner.close();
         return middayTrueSolarTime;
@@ -111,28 +126,31 @@ public class TextUI {
         }
     }
 
-    // parses and puts city data from .csv into
+    // Parses and puts city data from cityData.csv into
     // a HashMap
-    private void loadFile() {
-        try (Scanner fileScan = new Scanner(Paths.get("cityLongitudes.csv"))) {
+    private void loadCityDataFile() {
+        try (Scanner fileScan = new Scanner(Paths.get("cityData.csv"))) {
 
-            // File uses comma separated values.
-            // For longitude we also need to separate the value
-            // from the direction via ° symbol
-            fileScan.useDelimiter(",|°|\\n");
+            fileScan.useDelimiter("[,\\n]");
+
+            // Skip header of file.
+            fileScan.nextLine();
+
             while (fileScan.hasNext()) {
 
-                String city = fileScan.next();
+                String city = fileScan.next().toLowerCase();
+                fileScan.next(); // Skip latitude.
+                double longitude = fileScan.nextDouble();
+                fileScan.nextLine(); // Skip rest of line.
 
-                Longitude longitude = new 
-                        Longitude(fileScan.nextDouble(), fileScan.next());
-
-                cities.add(city);
+                // Longitude longitude = new
+                // Longitude(fileScan.nextDouble(), fileScan.next());
                 citiesAndLongitudes.put(city, longitude);
             }
         } catch (IOException e) {
             System.out.println("A file error has occurred."
-                    + " This program will now exit.");
+                    + " Exiting program.");
+            System.exit(1);
         }
     }
 }
