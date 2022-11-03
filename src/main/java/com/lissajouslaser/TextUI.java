@@ -46,11 +46,10 @@ public class TextUI {
 
         loadCityDataFile();
 
-        System.out.println("\nThis program will give you the time of midday at "
-                + "true solar time");
+        System.out.println("\nSOLAR NOON CALCULATOR.");
         while (true) {
 
-            System.out.println("\nEnter in a city:");
+            System.out.println("\nEnter a city from which to check the time of solar noon:");
             input = scanner.nextLine().trim().toLowerCase();
 
             longitudeOrNull = citiesAndLongitudes.get(input);
@@ -82,8 +81,9 @@ public class TextUI {
             break;
         }
 
-        System.out.println("\nEnter a date (in DDMM format) "
-                + "you would like to check. Leave blank for today.");
+        System.out.println("\nEnter the date (in DDMM format) "
+                + "you would like to check.\n"
+                + "Leave blank for today.");
 
         while (true) {
             input = scanner.nextLine().trim();
@@ -108,11 +108,12 @@ public class TextUI {
         NoonCalculator sundialMidday = new NoonCalculator(longitude, cal, zoneRules);
         LocalTime middayTrueSolarTime = sundialMidday.trueSolarNoon();
 
-        System.out.println("\nMidday in true solar time will occur at "
-                + "(in local time, with daylight savings if applicable):\n"
-                + middayTrueSolarTime);
+        System.out.println("\nMidday in solar time will occur at:\n"
+                + middayTrueSolarTime + "\n"
+                + "(Local time, daylight savings if applicable)");
 
         scanner.close();
+
         return middayTrueSolarTime;
     }
 

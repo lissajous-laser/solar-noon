@@ -7,6 +7,13 @@ Solar noon varies throughout the year. These differences are caused by the the E
 ![figure 8 image](https://www.spaceweather.com/swpod2006/24dec06/tezel1.jpg)
 *Composite photo of the sun at noon throughout the year, including a solar eclipse. Credit: Tunç Tezel.*
 
+## How to Use
+Run the program at [replit](https://replit.com/@lissajouslaser/solar-noon) by pressing the Run button.
+
+Note that when entering the date, the program is lenient with inputs. Entering the 33rd of January will be interpreted as the 2nd of February.
+
+The results can be checked against the values at [timeanddate](https://www.timeanddate.com/astronomy/australia/melbourne) by finding the meridian time.
+
 
 ## Implementation
 The program will give the local time for solar noon, based on a date and a city location.
